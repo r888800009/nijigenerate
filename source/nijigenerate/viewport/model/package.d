@@ -33,6 +33,7 @@ import std.array;
 
 private {
     Part[] foundParts;
+    Part[] mouseOverParts;
 
     enum ENTRY_SIZE = 48;
 }
@@ -48,6 +49,64 @@ enum ViewporMenuSortMode {
 }
 
 ViewporMenuSortMode incViewportModelMenuSortMode = ViewporMenuSortMode.ZSort;
+
+void incFoundParts(ref Part[] parts) {
+    parts.length = 0;
+
+    vec2 mpos = incInputGetMousePosition()*-1;
+    mloop: foreach(ref Part part; incActivePuppet.getAllParts()) {
+        rect b = rect(part.bounds.x, part.bounds.y, part.bounds.z-part.bounds.x, part.bounds.w-part.bounds.y);
+        if (b.intersects(mpos)) {
+
+            // Skip already selected parts
+            foreach(pn; incSelectedNodes()) {
+                if (pn.uuid == part.uuid) continue mloop;
+            }
+            parts ~= part;
+        }
+    }
+}
+
+void incSortFoundParts(ref Part[] parts, ViewporMenuSortMode mode) {
+    import std.algorithm.sorting : sort;
+    import std.algorithm.mutation : SwapStrategy;
+    import std.math : cmp;
+
+    if (mode == ViewporMenuSortMode.ZSort) {
+        sort!((a, b) => cmp(
+            a.zSortNoOffset, 
+            b.zSortNoOffset) < 0, SwapStrategy.stable)(parts);
+
+    } else if (mode == ViewporMenuSortMode.SizeSort) {
+        sort!((a, b) => cmp(
+            (a.bounds.z - a.bounds.x) * (a.bounds.w - a.bounds.y), 
+            (b.bounds.z - b.bounds.x) * (b.bounds.w - b.bounds.y)) < 0, SwapStrategy.stable)(parts);
+
+    } else {
+        throw new Exception("Unknown sort mode");
+    }
+}
+
+void incViewportModelMenuOpening() {
+    incFoundParts(foundParts);
+    incSortFoundParts(foundParts, incViewportModelMenuSortMode);
+}
+
+void incDrawMouse() {
+    if (mouseOverParts.length > 0)
+        mouseOverParts[0].drawBounds();
+}
+
+void incSelectIO() {
+    incFoundParts(mouseOverParts);
+    incSortFoundParts(mouseOverParts, ViewporMenuSortMode.ZSort);
+    if (mouseOverParts.length > 0) {
+        if (igIsItemClicked(ImGuiMouseButton.Left)) {
+            incSelectNode(mouseOverParts[0]);
+            //incFocusCamera(part);
+        }
+    }
+}
 
 class ModelLayoutViewport : Viewport {
 public:
@@ -307,6 +366,9 @@ public:
 
         incActivePuppet.update();
         incActivePuppet.draw();
+
+        incDrawMouse();
+
         auto onion = OnionSlice.singleton();
         onion.draw();
 
@@ -512,38 +574,7 @@ public:
 
     override
     void menuOpening() { 
-        foundParts.length = 0;
-
-        vec2 mpos = incInputGetMousePosition()*-1;
-        mloop: foreach(ref Part part; incActivePuppet.getAllParts()) {
-            rect b = rect(part.bounds.x, part.bounds.y, part.bounds.z-part.bounds.x, part.bounds.w-part.bounds.y);
-            if (b.intersects(mpos)) {
-
-                // Skip already selected parts
-                foreach(pn; incSelectedNodes()) {
-                    if (pn.uuid == part.uuid) continue mloop;
-                }
-                foundParts ~= part;
-            }
-        }
-
-        import std.algorithm.sorting : sort;
-        import std.algorithm.mutation : SwapStrategy;
-        import std.math : cmp;
-
-        if (incViewportModelMenuSortMode == ViewporMenuSortMode.ZSort) {
-            sort!((a, b) => cmp(
-                a.zSortNoOffset, 
-                b.zSortNoOffset) < 0, SwapStrategy.stable)(foundParts);
-
-        } else if (incViewportModelMenuSortMode == ViewporMenuSortMode.SizeSort) {
-            sort!((a, b) => cmp(
-                (a.bounds.z - a.bounds.x) * (a.bounds.w - a.bounds.y), 
-                (b.bounds.z - b.bounds.x) * (b.bounds.w - b.bounds.y)) < 0, SwapStrategy.stable)(foundParts);
-
-        } else {
-            throw new Exception("Unknown sort mode");
-        }
+        incViewportModelMenuOpening();
     };
 
     override
