@@ -3,6 +3,8 @@ import nijigenerate.widgets;
 import bindbc.imgui;
 import nijilive;
 
+Node[] incDragDropNodeListData;
+
 void incDragdropNodeList(Node node) {
     enum ENTRY_SIZE = 48;
     igPushID(node.uuid);
@@ -12,6 +14,7 @@ void incDragdropNodeList(Node node) {
             incText(node.name);
         }
     igPopID();
+    incDragDropNodeListData = [node];
 }
 
 void incDragdropNodeList(Node[] nodes) {
@@ -40,6 +43,7 @@ void incDragdropNodeList(Node[] nodes) {
             incText(node.name);
         }
     }
+    incDragDropNodeListData = nodes;
 }
 
 /**

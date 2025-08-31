@@ -989,11 +989,16 @@ void incInspectorModelPart(Part node) {
             const(ImGuiPayload)* payload = igAcceptDragDropPayload("_PUPPETNTREE");
             if (payload !is null) {
                 if (Drawable payloadDrawable = cast(Drawable)*cast(Node*)payload.Data) {
+                    foreach(selectedNode; incDragDropNodeListData) {
+                        // Make sure we don't mask against ourselves as well as don't double mask
+                        if (node == selectedNode) continue;
+                        auto d = cast(Drawable)selectedNode;
+                        if (d is null) continue;
+                        if (node.isMaskedBy(d)) continue;
 
-                    // Make sure we don't mask against ourselves as well as don't double mask
-                    if (payloadDrawable != node && !node.isMaskedBy(payloadDrawable)) {
-                        incActionPush(new PartAddMaskAction(payloadDrawable, node, MaskingMode.Mask));
+                        incActionPush(new PartAddMaskAction(d, node, MaskingMode.Mask));
                     }
+
                 }
             }
             
