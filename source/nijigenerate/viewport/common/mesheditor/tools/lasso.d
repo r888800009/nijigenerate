@@ -111,36 +111,26 @@ public:
         if (lassoPoints.length < 2 * 2)
             return;
 
-        // Helper function to get deformed vertices from a deformable object
-        void getDeformedVertices(T)(T deformableObject, ref vec2[] vertices) {
-            vertices.length = deformableObject.vertices().length;
-            foreach (index, vec; deformableObject.vertices())
-                vertices[index] = vec + deformableObject.deformation[index];
-        }
-
-        // get the vertices
         vec2[] vertices;
-        if (auto tmpImpl = cast(IncMeshEditorOneFor!(Drawable, EditMode.ModelEdit))impl) {
-            // We need to use Drawable because it has been Deformed
-            getDeformedVertices(cast(Drawable)tmpImpl.getTarget(), vertices);
-        } else if (auto tmpImpl = cast(IncMeshEditorOneFor!(Deformable, EditMode.ModelEdit))impl) {
-            // Handle Deformable in ModelEdit mode
-            getDeformedVertices(cast(Deformable)tmpImpl.getTarget(), vertices);
-        } else if (auto tmpImpl = cast(IncMeshEditorOneDrawable)impl) {
-            // We can't use Drawable because the Drawable hasn't been updated yet
-            // For edit mode we are not affected by binding so can use mesh vertices directly
-            auto mesh = tmpImpl.getMesh();
-            if (mesh is null)
-                return;
-
-            vertices.length = mesh.vertices.length;
-            foreach (index, meshVertex; mesh.vertices)
-                vertices[index] = meshVertex.position;
+        ulong[] indices;
+        if (auto tmp = cast(IncMeshEditorOneDrawable)impl) {
+            indices.length = tmp.vertices.length;
+            foreach (i; 0..indices.length) indices[i] = i;
+        } else if (auto tmp = cast(IncMeshEditorOneDeformable)impl) {
+            indices.length = tmp.vertices.length;
+            foreach (i; 0..indices.length) indices[i] = i;
         } else {
             // Prevent Hard Crash
             string typeName = typeid(impl).name;
             incDialog(__("Error"), "Lasso Tool Error: \nInvalid IncMeshEditorOne type, please report this issue to the developer. \n\nType: " ~ typeName);
             return;
+        }
+
+        auto vtxPtrs = impl.getVerticesByIndex(indices, true);
+        vertices.length = vtxPtrs.length;
+        foreach (i, vtx; vtxPtrs) {
+            if (vtx !is null)
+                vertices[i] = vtx.position;
         }
 
         // check if the point is inside the lasso polygon
