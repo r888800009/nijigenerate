@@ -194,7 +194,7 @@ protected:
             import nijigenerate.viewport.model : incSelectIO;
             incSelectIO();
 
-            igPushStyleVar(ImGuiStyleVar.FrameBorderSize, 0);
+            //igPushStyleVar(ImGuiStyleVar.FrameBorderSize, 0);
                 incBeginViewportToolArea("ToolArea", ImGuiDir.Left);
                     igPushStyleVar_Vec2(ImGuiStyleVar.FramePadding, ImVec2(6, 6));
                         viewport.drawTools();

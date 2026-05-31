@@ -87,11 +87,6 @@ void incSortFoundParts(ref Part[] parts, ViewporMenuSortMode mode) {
     }
 }
 
-void incViewportModelMenuOpening() {
-    incFoundParts(foundParts);
-    incSortFoundParts(foundParts, incViewportModelMenuSortMode);
-}
-
 void incDrawMouse() {
     if (mouseOverParts.length > 0)
         mouseOverParts[0].drawBounds();
@@ -574,7 +569,8 @@ public:
 
     override
     void menuOpening() { 
-        incViewportModelMenuOpening();
+        incFoundParts(foundParts);
+        incSortFoundParts(foundParts, incViewportModelMenuSortMode);
     };
 
     override
